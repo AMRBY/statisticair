@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>STATISTICAIR</title>
+    <link rel="icon" href="tatic/images/icon.png">
+    <link rel="stylesheet" href="static/styles/header.css">
+    <link rel="stylesheet" href="static/styles/footer.css">
+    <link rel="stylesheet" href="static/styles/body.css">
+  </head>
+  <body>
+    <header>STATISTICAIR</header>
+    <div class="container"> 
+     <div class="menu">
+	     <a href= "{{ url_for('form') }}">Data</a></br>
+	     <a href= "{{ url_for('graph') }}">Graph</a></br>
+	     <a href= "{{ url_for('graph') }}">Import</a></br>
+     </div>
+     <div class="right">
+        <section class="filters">
+	  <form action="/form" method="POST">
+	    <label for="from">From:</label>
+	    <input type="test" name="from">
+	    <label for="to">To:</label>
+	    <input type="text" name="to">
+	    <label for="flight_id">Flight_id:</label>
+	    <input type="text" name="flight_id"></br>
+	    <label for="date_from">Date from:</label>
+	    <input type="date" name="date_from" required>
+	    <label for="date_to">Date to:</label>
+	    <input type="date" name="date_to" required>
+	    <button type="submit">Search</button>
+	  </form>
+        </section>
+	{% if flights %}
+	<section class="results">
+		<h2> Filtre:</h2>
+		{% for key, value in filtre.items() %}
+		  {% if value %}
+		<b>{{ key }} : </b>{{ value }}
+		  {% else %}
+		<b>{{ key }} : </b>ALL
+		  {% endif %}
+		{% endfor %}
+		</br><h2> Total: </h2>{{ count }}
+		<table id="sortableTable">
+		 <thead>
+            	  <tr>
+                    <th onclick="sortTable(0)">FLIGHT_ID</th>
+                    <th onclick="sortTable(1)">ORIGIN</th>
+                    <th onclick="sortTable(2)">DESTINATION</th>
+                    <th onclick="sortTable(3)">DATETIME</th>
+                    <th onclick="sortTable(4)">DIRECT</th>
+                    <th onclick="sortTable(5)">FLOWN</th>
+                  </tr>
+        	 </thead>
+        	 <tbody>
+		  {% for i in range(flights|length) %}
+           	  <tr>
+		    <td>{{ flights[i][1] }}</td>
+	   	    <td>{{ flights[i][2] }}</td>
+	   	    <td>{{ flights[i][3] }}</td>
+	   	    <td>{{ flights[i][4] }}</td>
+	   	    <td>{{ distances[i][0][1] }}</td>
+	   	    <td>{{ distances[i][0][2] }}</td>
+            	  </tr>
+		  {% endfor  %}
+		 </tbody>
+		</table>
+	</section>
+  	{% endif %}
+     </div>	
+    </div>
+    <footer>FOOTER</footer>
+  </body>
+</html>
+     
