@@ -60,16 +60,8 @@
 	   	    <td>{{ flights[i][2] }}</td>
 	   	    <td>{{ flights[i][3] }}</td>
 	   	    <td>{{ flights[i][4] }}</td>
-		    {% if distances[i] and distances[i][0] %}
-	   	     <td>{{ distances[i][0][1] }}</td>
-		    {% else %}
-		     <td>No Data</td>
-		    {% endif %}
-		    {% if distances[i] and distances[i][0] %}
-	   	     <td>{{ distances[i][0][2] }}</td>
-		    {% else %}
-		     <td>No Data</td>
-		    {% endif %}
+	   	    <td>{{ flights[i][8] }}</td>
+	   	    <td>{{ flights[i][9] }}</td>
             	  </tr>
 		  {% endfor  %}
 		 </tbody>

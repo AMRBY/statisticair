@@ -45,21 +45,35 @@ class storage(DateTimeEncoder, flight):
         di, fl, kea = self.calculator(flights)
         return (di, fl, kea)
         
-        """
-        record = request.files['file']
-        record_path = os.path.join("record/", record.filename)
-        record.save(record_path)
-        acb_name = 'ACB' + record.filename.split('.')[2] + record.filename.split('.')[3] + record.filename.split('.')[4]
-        acb_path = os.path.join("record/", acb_name)
-        try:
-            result = subprocess.run(['bash', "commands_awk.sh", record_path, acb_path], check=True, text=True, capture_output=True)
-            std = result.stdout
-        except subprocess.CalledProcessError as e:
-            std = e.stderr
-        """
-    def delete(self):
+    def show_all(self):
         # need "DELETE" query to delete a flight from db
-        pass
+        #flight_ids = tuple([flight[0] for flight in flights])
+        #string_fetch = ','.join(['%s'] * len(flight_ids))
+        #base_query = f"SELECT flights.flight_id, distances.direct, distances.flown FROM distances JOIN flights ON distances.id_flight=flights.id WHERE distances.id_flight IN ({string_fetch})"
+        base_query = "SELECT * FROM flights JOIN distances ON flights.id=distances.id_flight WHERE 1=1 "
+        params = []
+        if self.flight_id:
+            base_query += "AND flight_id LIKE %s"
+            params.append(f"{self.flight_id}%")
+        if self.origin:
+            base_query += "AND origin LIKE %s"
+            params.append(f"{self.origin}%")
+        if self.destination:
+            base_query += "AND destination LIKE %s"
+            params.append(f"{self.destination}%")
+        if self.route:
+            base_query += "AND route LIKE %s"
+            params.append(f"{self.route}%")
+        if self.date_from and self.date_to:
+            base_query += "AND DATE(arrived_at) BETWEEN %s AND %s"
+            params.append(self.date_from)
+            params.append(self.date_to)
+        #self.cur.execute(base_query, flight_ids)
+ 
+        self.cur.execute(base_query, params)
+        query_rows = self.cur.fetchall()
+        return query_rows
+
 
     def show_flights(self):
         #base_query = "SELECT * FROM flights JOIN distances ON flights.id=distances.id_flight WHERE 1=1 "
@@ -136,10 +150,11 @@ class storage(DateTimeEncoder, flight):
 
     def show_distances(self, flights):
         distances = []
-        for flight in flights:
-            base_query = f"SELECT flights.flight_id, distances.direct, distances.flown FROM distances JOIN flights ON distances.id_flight=flights.id WHERE distances.id_flight=%s"
-            self.cur.execute(base_query, (flight[0],))
-            distances.append(self.cur.fetchall())
+        flight_ids = tuple([flight[0] for flight in flights])
+        string_fetch = ','.join(['%s'] * len(flight_ids))
+        base_query = f"SELECT flights.flight_id, distances.direct, distances.flown FROM distances JOIN flights ON distances.id_flight=flights.id WHERE distances.id_flight IN ({string_fetch})"
+        self.cur.execute(base_query, flight_ids)
+        distances = self.cur.fetchall()
         return distances
 
     def daily_kea(self):

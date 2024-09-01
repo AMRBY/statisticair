@@ -35,16 +35,15 @@ def form():
         a.flight_id = session.get('flight_id')
  
     filtre = {'From': a.origin, 'To': a.destination, 'Flight_id': a.flight_id, 'Date_from': a.date_from, 'Date_to': a.date_to}
-    flights = a.show_flights()
+    flights = a.show_all()
     count = a.count()
-    distances = a.show_distances(flights)
     session['date_from'] = a.date_from
     session['date_to'] = a.date_to
     session['origin'] = a.origin
     session['destination'] = a.destination
     session['flight_id'] = a.flight_id
     redirect(url_for('graph'))
-    return render_template('index.html', flights=flights, filtre=filtre, count=count, distances=distances)
+    return render_template('index.html', flights=flights, filtre=filtre, count=count)
 
 @app.route('/graph', methods=['GET', 'POST'], strict_slashes=False)
 def graph():
@@ -72,10 +71,7 @@ def graph():
         a.flight_id = session.get('flight_id')
  
     filtre = {'Date_from': a.date_from, 'Date_to': a.date_to}
-    flights = a.show_flights()
-    #print(f"flights={flights}")
     count = a.count()
-    distances = a.show_distances(flights)
     labels, sizes = a.companies()
     days = list(a.daily_kea().keys())
     keas = list(a.daily_kea().values())
