@@ -9,12 +9,15 @@ import matplotlib.pyplot as plt
 s = storage()
 f = flight()
 
-s.date_from = "2023-03-31"
-s.date_to = "2023-04-1"
+s.date_from = "2023-04-15"
+s.date_to = "2023-04-18"
 """ THIS LINES ARE USED TO CALCULATE DISTANCES AND KEA AND STORE THEM TO DB """
-"""
 flights = s.show_flights()
-to_dict = s.to_dict()
+to_dict = s.to_dict(flights)
+dist = s.calculator(to_dict)
+print(dist)
+#print(s.show_distances(flights))
+"""
 for i in to_dict:
     #print(i)
     f.flight_id = i['flight_id']
@@ -29,14 +32,12 @@ for i in to_dict:
     #print("GM= {}\nD= {}, F= {}, KEA= {}".format(gm, di, fl, kea))
     f.to_db(di, fl, kea)
 """
+#s.upload("/media/sf_statisticair/record/ACB20230411")
 #daily_kea = s.daily_kea()
 #print(daily_kea)
-labels, sizes = s.companies()
-flights = s.show_flights()
-#print(flights)
-
-print(s.show_distances(flights))
+#labels, sizes = s.companies()
 #print(labels, sizes)
+#s.calculator()
 s.close()
 """
 # Sample data

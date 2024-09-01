@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>STATISTICAIR</title>
+    <link rel="icon" href="tatic/images/icon.png">
+    <link rel="stylesheet" href="static/styles/header.css">
+    <link rel="stylesheet" href="static/styles/footer.css">
+    <link rel="stylesheet" href="static/styles/body.css">
+  </head>
+  <body>
+    <header>STATISTICAIR</header>
+    <div class="container"> 
+     <div class="menu">
+	     <a href= "{{ url_for('form') }}">Data</a></br>
+	     <a href= "{{ url_for('graph') }}">Graph</a></br>
+	     <a href= "{{ url_for('import_data') }}">Import</a></br>
+     </div>
+     <div class="right">
+        <section class="filters">
+	  <form action="/import" method="POST" enctype="multipart/form-data">
+	    <label for="fixpoint">Fixpoint_Name:</label>
+	    <input type="test" name="fixpoint">
+	    <label for="latitude">Latitude:</label>
+	    <input type="test" name="latitude">
+	    <label for="longitude">Longitude:</label>
+	    <input type="test" name="longitude"></br>
+	    <label for="file">CSV file:</label>
+	    <input type="file" name="file"></br>
+	    <button type="submit">Import</button>
+	  </form>
+        </section>
+	<section class="results">
+		<h2>Data LOADED </h2>
+		<p>{{ di }}, {{ fl }}, {{ kea }}</p>
+	</section>
+     </div>	
+    </div>
+    <!--<footer>FOOTER</footer>-->
+  </body>
+</html>
+     

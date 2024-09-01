@@ -13,7 +13,6 @@ class flight:
 
     def __init__(self, flight_id=None, origin=None, destination=None, arrived_at=None, route=None):
         self.conn = MySQLdb.connect(host=flight.STATI_HOST, user=flight.STATI_USER, passwd=flight.STATI_PASSWD, db=flight.STATI_DB, charset="utf8")
-        #self.conn = MySQLdb.connect(host="localhost", user=argv[1], passwd=argv[2], db=argv[3], charset="utf8")
         self.cur = self.conn.cursor()
         self.flight_id = flight_id
         self.origin = origin
@@ -91,16 +90,20 @@ class flight:
         return round(kea, 2)
 
     def to_db(self, direct_dist, flown_dist, kea):
-        i = 0
         self.cur.execute("SELECT id FROM flights WHERE arrived_at=%s AND route=%s",(self.arrived_at, self.route))
         row = self.cur.fetchall()
-        #while row[i]:
         try:
-            print(row[i], direct_dist, flown_dist, kea)
-            self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[i], direct_dist, flown_dist, kea))
+            if len(row) == 1:
+                #print(row[0], direct_dist, flown_dist, kea)
+                self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[0], direct_dist, flown_dist, kea))
+            elif len(row) == 2:
+                #print(row[1], direct_dist, flown_dist, kea)
+                self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[1], direct_dist, flown_dist, kea))
+            else:
+                #print ("id exists")
+                pass
         except Exception:
-            i += 1
-            self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[i], direct_dist, flown_dist, kea))
+            pass
 
         self.conn.commit()
 

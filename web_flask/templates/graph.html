@@ -13,11 +13,17 @@
      <div class="menu">
 	     <a href= "{{ url_for('form') }}">Data</a></br>
 	     <a href= "{{ url_for('graph') }}">Graph</a></br>
-	     <a href= "{{ url_for('graph') }}">Import</a></br>
+	     <a href= "{{ url_for('import_data') }}">Import</a></br>
      </div>
      <div class="right">
         <section class="filters">
 	  <form action="/graph" method="POST">
+	    <label for="from">From:</label>
+	    <input type="test" name="from">
+	    <label for="to">To:</label>
+	    <input type="text" name="to">
+	    <label for="flight_id">Flight_id:</label>
+    	    <input type="text" name="flight_id"></br>
 	    <label for="date_from">Date from:</label>
 	    <input type="date" name="date_from" required>
 	    <label for="date_to">Date to:</label>
@@ -25,7 +31,6 @@
 	    <button type="submit">Search</button>
 	  </form>
         </section>
-	{% if flights %}
 	<section class="results">
 		<h2> Filtre:</h2>
 		{% for key, value in filtre.items() %}
@@ -36,14 +41,16 @@
 		  {% endif %}
 		{% endfor %}
 		</br><h2> Total: </h2>{{ count }}
-		</br><h2>Labels: </h2>{{ labels }}
+	{% if flights %}
 		</br><img src="../static/pie_chart.png" alt="Pie Graph">
 		</br><img src="../static/bar.png" alt="Bar Graph">
-	</section>
+	{% else %}
+	<h1>Ooops! no data found!</br>Please search again!</h1>
   	{% endif %}
+	</section>
      </div>	
     </div>
-    <footer>FOOTER</footer>
+    <!--<footer>FOOTER</footer>-->
   </body>
 </html>
      

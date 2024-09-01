@@ -13,7 +13,7 @@
      <div class="menu">
 	     <a href= "{{ url_for('form') }}">Data</a></br>
 	     <a href= "{{ url_for('graph') }}">Graph</a></br>
-	     <a href= "{{ url_for('graph') }}">Import</a></br>
+	     <a href= "{{ url_for('import_data') }}">Import</a></br>
      </div>
      <div class="right">
         <section class="filters">
@@ -31,7 +31,6 @@
 	    <button type="submit">Search</button>
 	  </form>
         </section>
-	{% if flights %}
 	<section class="results">
 		<h2> Filtre:</h2>
 		{% for key, value in filtre.items() %}
@@ -42,6 +41,7 @@
 		  {% endif %}
 		{% endfor %}
 		</br><h2> Total: </h2>{{ count }}
+	{% if flights %}
 		<table id="sortableTable">
 		 <thead>
             	  <tr>
@@ -60,17 +60,27 @@
 	   	    <td>{{ flights[i][2] }}</td>
 	   	    <td>{{ flights[i][3] }}</td>
 	   	    <td>{{ flights[i][4] }}</td>
-	   	    <td>{{ distances[i][0][1] }}</td>
-	   	    <td>{{ distances[i][0][2] }}</td>
+		    {% if distances[i] and distances[i][0] %}
+	   	     <td>{{ distances[i][0][1] }}</td>
+		    {% else %}
+		     <td>No Data</td>
+		    {% endif %}
+		    {% if distances[i] and distances[i][0] %}
+	   	     <td>{{ distances[i][0][2] }}</td>
+		    {% else %}
+		     <td>No Data</td>
+		    {% endif %}
             	  </tr>
 		  {% endfor  %}
 		 </tbody>
 		</table>
-	</section>
+	{% else %}
+	<h1>Ooops! No data found!</br>Please search again!</h1>
   	{% endif %}
+	</section>
      </div>	
     </div>
-    <footer>FOOTER</footer>
+    <!--<footer>FOOTER</footer>-->
   </body>
 </html>
      
