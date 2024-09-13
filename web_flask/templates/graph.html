@@ -2,13 +2,16 @@
 <html lang="en">
   <head>
     <title>STATISTICAIR</title>
-    <link rel="icon" href="tatic/images/icon.png">
+    <link rel="icon" href="static/images/logo.png">
     <link rel="stylesheet" href="static/styles/header.css">
     <link rel="stylesheet" href="static/styles/footer.css">
     <link rel="stylesheet" href="static/styles/body.css">
   </head>
   <body>
-    <header>STATISTICAIR</header>
+    <header>
+	    <div class="logo"></div>
+	    <div class="title">STATISTICAIR</div>
+    </header>
     <div class="container"> 
      <div class="menu">
 	     <a href= "{{ url_for('form') }}">Data</a></br>
@@ -43,9 +46,9 @@
 		</br><h2> Total: </h2>{{ count }}
 	{% if labels %}
 		</br><img src="../static/pie_chart.png" alt="Pie Graph">
-		</br><img src="../static/bar.png" alt="Bar Graph">
+		<img src="../static/bar.png" alt="Bar Graph">
 	{% else %}
-	<h1>Ooops! no data found!</br>Please search again!</h1>
+	<h1>Ooops! No data found!</br>Please search again!</h1>
   	{% endif %}
 	</section>
      </div>	

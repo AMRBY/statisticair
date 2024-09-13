@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from flask import jsonify
 import subprocess
 import MySQLdb
 from sys import argv
@@ -22,9 +23,34 @@ class storage(DateTimeEncoder, flight):
     def __init__(self, flight_id=None, origin=None, destination=None, arrived_at=None, route=None):
         flight.__init__(self, flight_id, origin, destination, arrived_at, route)
 
-    def upload(self, acb_path):
+    def upload_fix(self, fix_name, fix_airport, lat_deg, lat_min, lat_sec, lon_deg, lon_min, lon_sec):
+        fix_name = fix_name.upper()
+        select_query = "SELECT name FROM decimalfixpoints WHERE name LIKE %s"
+        self.cur.execute(select_query, (fix_name,))
+        fix = self.cur.fetchone()
+        if fix:
+            return f"'{fix[0]}' exists"
+        else:
+            lat_decimal = round(int(lat_deg) + int(lat_min) / 60 + int(lat_sec) / 3600, 6)
+            lon_decimal = -round(int(lon_deg) + int(lon_min) / 60 + int(lon_sec) / 3600, 6)
+            insert_query = "INSERT INTO decimalfixpoints (name, lat, lon) VALUES (%s, %s, %s)"
+            try:
+                self.cur.execute(insert_query, (fix_name, lat_decimal, lon_decimal))
+                self.conn.commit()
+                return f"'{fix_name}' loaded succefully!"
+            except Exception:
+                return f"Error found in '{fix_name}' informations!"
+            
+    def upload(self, record):
         # save acb to db
-        calcul = None
+        import os
+        import subprocess
+        record_path = os.path.join("record/", record.filename)
+        record.save(record_path)
+        #abso = os.path.abspath(__file__)
+        acb_name = 'ACB' + record.filename.split('.')[2] + record.filename.split('.')[3] + record.filename.split('.')[4]
+        acb_path = os.path.join("record/", acb_name)
+        result = subprocess.run(['bash', "commands_awk.sh", record_path, acb_path], check=True, text=True, capture_output=True)
         db_path = '/var/lib/mysql-files/'
         acb_name = db_path + acb_path.split('/')[-1]
         command1 = ['cp', acb_path, db_path]
@@ -33,23 +59,27 @@ class storage(DateTimeEncoder, flight):
         result2 = subprocess.run(command2, check=True, text=True, capture_output=True)
         max_id_query = "SELECT MAX(id) from flights;"
         upload_query = "LOAD DATA INFILE %s INTO TABLE flights FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\n' (arrived_at, flight_id, origin, destination, route);"
-        uploaded_query = "SELECT * FROM flights WHERE id > %s"
+        uploaded_query = "SELECT * FROM flights WHERE (%s IS NULL OR id > %s);"
         self.cur.execute("USE kpi;")
         self.cur.execute(max_id_query)
         max_id = self.cur.fetchone()[0]
+        #print(max_id)
         self.cur.execute(upload_query, (acb_name,))
         self.conn.commit()
-        self.cur.execute(uploaded_query, (max_id,))
+        self.cur.execute(uploaded_query, (max_id, max_id))
         uploaded_rows = self.cur.fetchall()
+        missed_fix = ""
         flights = self.to_dict(uploaded_rows)
-        di, fl, kea = self.calculator(flights)
-        return (di, fl, kea)
+        di, fl, kea, missed_fix = self.calculator(flights)
+        #print(di, fl, kea, missed_fix)
+        if missed_fix != "":
+            delete_query = "DELETE from flights WHERE (%s IS NULL OR id > %s);"
+            self.cur.execute(delete_query, (max_id, max_id))
+            self.conn.commit()
+        self.close()
+        return missed_fix
         
     def show_all(self):
-        # need "DELETE" query to delete a flight from db
-        #flight_ids = tuple([flight[0] for flight in flights])
-        #string_fetch = ','.join(['%s'] * len(flight_ids))
-        #base_query = f"SELECT flights.flight_id, distances.direct, distances.flown FROM distances JOIN flights ON distances.id_flight=flights.id WHERE distances.id_flight IN ({string_fetch})"
         base_query = "SELECT * FROM flights JOIN distances ON flights.id=distances.id_flight WHERE 1=1 "
         params = []
         if self.flight_id:
@@ -68,7 +98,6 @@ class storage(DateTimeEncoder, flight):
             base_query += "AND DATE(arrived_at) BETWEEN %s AND %s"
             params.append(self.date_from)
             params.append(self.date_to)
-        #self.cur.execute(base_query, flight_ids)
  
         self.cur.execute(base_query, params)
         query_rows = self.cur.fetchall()
@@ -76,7 +105,6 @@ class storage(DateTimeEncoder, flight):
 
 
     def show_flights(self):
-        #base_query = "SELECT * FROM flights JOIN distances ON flights.id=distances.id_flight WHERE 1=1 "
         base_query = "SELECT * FROM flights WHERE 1=1 "
         params = []
         if self.flight_id:
@@ -102,8 +130,6 @@ class storage(DateTimeEncoder, flight):
 
     def to_dict(self, query_rows):
         list_dict = []
-        #query_rows = None
-        #query_rows = self.show_flights()
         if query_rows is not None:
             for row in query_rows:
                 flight_dict = {}
@@ -120,7 +146,11 @@ class storage(DateTimeEncoder, flight):
         query_rows = None
         query_rows = self.show_flights()
         if query_rows is not None:
-            json_output = json.dumps(query_rows, cls=DateTimeEncoder)
+            flights_dict = self.to_dict(query_rows)
+            #json_output = json.dumps(query_rows, cls=DateTimeEncoder)
+            for flight in flights_dict:
+                flight["arrived_at"] = flight["arrived_at"].isoformat()
+            json_output = json.dumps(flights_dict)
         return json_output 
             
     def count(self):
@@ -131,22 +161,40 @@ class storage(DateTimeEncoder, flight):
         di = None
         fl = None
         kea = None
-        #flights = self.show_flights()
-        #to_dict = self.to_dict()
+        missed_fix = ""
+        deci = []
+        f = flight()
         for flights in list_of_dict:
-            f = flight()
+            print(flights)
+            f.id = flights['id']
             f.flight_id = flights['flight_id']
             f.origin = flights['origin']
             f.destination = flights['destination']
             f.arrived_at = flights['arrived_at']
             f.route = flights['route']
-            gm = f.gm(f.decimal())
-            di = f.direct(gm)
-            fl = f.flown(gm)
-            kea = f.kea(di, fl)
-            #print(di, fl, kea)
-            f.to_db(di, fl, kea)
-        return (di, fl, kea)
+            deci = f.decimal()
+            if not isinstance(deci[0], str):
+                gm = f.gm(deci)
+                if not isinstance(gm[0], str):
+                    di = f.direct(gm)
+                    fl = f.flown(gm)
+                    kea = f.kea(di, fl)
+                    #print(f.id, di, fl, kea)
+                    #f.to_db(f.id, di, fl, kea)
+                    self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(f.id, di, fl, kea))
+                else:
+                    print("'{}': airport not found!".format(gm[0]))
+                    missed_fix = f"'{gm[0]}': Airport not found!"
+                    #missed_fix = gm[0]
+                    self.conn.rollback()
+                    break
+            else:
+                print("'{}': fixpoint not found!".format(deci[0]))
+                missed_fix = f"'{deci[0]}': Fixpoint not found!"
+                self.conn.rollback()
+                break
+        self.conn.commit()
+        return (di, fl, kea, missed_fix)
 
     def show_distances(self, flights):
         distances = []
@@ -158,20 +206,24 @@ class storage(DateTimeEncoder, flight):
         return distances
 
     def daily_kea(self):
+        distances = []
         kea_list = {}
+        array_date = []
         date_from = datetime.strptime(self.date_from, "%Y-%m-%d")
         date_to = datetime.strptime(self.date_to, "%Y-%m-%d")
-        base_query = f"SELECT SUM(distances.direct), SUM(distances.flown) FROM distances JOIN flights ON distances.id_flight=flights.id WHERE DATE(flights.arrived_at)=%s"
         current_date = date_from
         while current_date <= date_to:
-            distances = ()
-            self.cur.execute(base_query, (current_date,))
-            distances = self.cur.fetchall()
-            #print(distances)
-            if distances != ((None, None),):
-                kea_daily = ((distances[0][1] / distances[0][0]) - 1) * 100
-                kea_list[current_date.strftime("%Y-%m-%d")] = round(kea_daily, 2)
+            array_date.append(current_date)
             current_date += timedelta(days=1)
+        tuple_date = tuple(array_date)
+        string_fetch = ','.join(['%s'] * len(tuple_date))
+        base_query = f"SELECT DATE(flights.arrived_at), SUM(distances.direct), SUM(distances.flown) FROM distances JOIN flights ON distances.id_flight=flights.id WHERE DATE(flights.arrived_at) IN ({string_fetch}) GROUP BY DATE(flights.arrived_at) ORDER BY DATE(flights.arrived_at)"
+        self.cur.execute(base_query, tuple_date)
+        distances = self.cur.fetchall()
+        if distances != ():
+            for distance in distances:
+                kea_daily = ((distance[2] / distance[1]) - 1) * 100
+                kea_list[datetime.strftime(distance[0], "%Y-%m-%d")] = round(kea_daily, 2)
         return kea_list
 
     def companies(self):
@@ -181,17 +233,18 @@ class storage(DateTimeEncoder, flight):
         base_query = f"SELECT SUBSTR(flight_id, 1, 3) AS cmp, COUNT(*) AS count FROM flights WHERE DATE(arrived_at) BETWEEN %s AND %s GROUP BY cmp HAVING count > 0 UNION SELECT 'TOTAL', COUNT(*) FROM flights WHERE DATE(arrived_at) BETWEEN %s AND %s ORDER BY count"
         self.cur.execute(base_query, (self.date_from, self.date_to, self.date_from, self.date_to))
         companies = self.cur.fetchall()
-        total = companies[len(companies)-1][1]
-        for i in range(0, len(companies)-1):
-            percentage = companies[i][1]/total*100
-            if percentage < 1:
-                other += percentage
-            else:
-                #percentage[i[0]]= round(i[1]/total * 100, 2)
-                labels.append(companies[i][0])
-                sizes.append(round(companies[i][1]/total*100, 2))
-        labels.append('Other')
-        sizes.append(round(other, 2))
+        if companies != (('TOTAL', 0),):
+            total = companies[len(companies)-1][1]
+            for i in range(0, len(companies)-1):
+                percentage = companies[i][1]/total*100
+                if percentage < 1:
+                    other += percentage
+                else:
+                    #percentage[i[0]]= round(i[1]/total * 100, 2)
+                    labels.append(companies[i][0])
+                    sizes.append(round(companies[i][1]/total*100, 2))
+            labels.append('Other')
+            sizes.append(round(other, 2))
         return labels, sizes
 
     def close(self):

@@ -5,7 +5,7 @@ starts a Flask web application
 import subprocess
 import os
 from models.storage import storage
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 app = Flask(__name__)
 app.secret_key = 'secret_key'
 
@@ -75,7 +75,7 @@ def graph():
     labels, sizes = a.companies()
     days = list(a.daily_kea().keys())
     keas = list(a.daily_kea().values())
-    if flights != ():
+    if labels != [] and sizes != []:
         pie_graph(sizes, labels)
         bar_graph(days, keas)
 
@@ -89,6 +89,8 @@ def graph():
     
 @app.route('/import', methods=['GET', 'POST'], strict_slashes=False)
 def import_data():
+    fix_msg = ""
+    file_msg = ""
     result = None
     di = None
     fl = None
@@ -96,19 +98,52 @@ def import_data():
     a = storage()
     if request.method == "POST":
         record = request.files['file']
-        record_path = os.path.join("record/", record.filename)
-        record.save(record_path)
-        #abso = os.path.abspath(__file__)
-        acb_name = 'ACB' + record.filename.split('.')[2] + record.filename.split('.')[3] + record.filename.split('.')[4]
-        acb_path = os.path.join("record/", acb_name)
-        try:
-            result = subprocess.run(['bash', "commands_awk.sh", record_path, acb_path], check=True, text=True, capture_output=True)
-            std = result.stdout
-            di, fl, kea = a.upload(acb_path)
-        except subprocess.CalledProcessError as e:
-            std = e.stderr
-    return render_template('import.html', di=di, fl=fl, kea=kea)
+        fix_name = request.form.get('fix_name')
+        fix_airport = request.form.get('fix_airport')
+        lat_deg = request.form.get('lat_deg')
+        lat_min = request.form.get('lat_min')
+        lat_sec = request.form.get('lat_sec')
+        lon_deg = request.form.get('lon_deg')
+        lon_min = request.form.get('lon_min')
+        lon_sec = request.form.get('lon_sec')
+        if record.filename == '':       
+            if fix_name and fix_airport and lat_deg and lat_min and lat_sec and lon_deg and lon_min and lon_sec:
+                s = storage()
+                fix_msg = s.upload_fix(fix_name, fix_airport, lat_deg, lat_min, lat_sec, lon_deg, lon_min, lon_sec)
 
+            else:
+                file_msg = "Please, choose a file or fill all fixpoint/airport informations!"
+        else:
+            if fix_name and fix_airport and lat_deg and lat_min and lat_sec and lon_deg and lon_min and lon_sec:
+                s = storage()
+                fix_msg = s.upload_fix(fix_name, fix_airport, lat_deg, lat_min, lat_sec, lon_deg, lon_min, lon_sec)
+            try:
+                missed_fix = a.upload(record)
+                if missed_fix != "":
+                    file_msg = missed_fix
+                else:
+                    file_msg = "File loaded successfully!"
+            except Exception as e:
+                file_msg = "Error found in file!" 
+    return render_template('import.html', fix_msg=fix_msg, file_msg=file_msg)
+
+@app.route('/api', methods=['GET'], strict_slashes=False)
+def api():
+    s = storage()
+    flights = s.show_flights()
+    results = s.to_dict(flights)
+    return jsonify(results)
+
+@app.route('/api/<int:f_id>', methods=['GET'], strict_slashes=False)
+def api_by_id(f_id):
+    s = storage()
+    flights = s.show_flights()
+    results = s.to_dict(flights)
+    if f_id:
+        for flight in results:
+            if flight["id"] == f_id:
+                return jsonify(flight)
+    return jsonify({"Error":"id does not exist"}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port='5000', debug=True)

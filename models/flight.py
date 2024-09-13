@@ -28,12 +28,10 @@ class flight:
         #print(fixs[:])
         deci = []
         for i in range(2, len(fixs)):
-            self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (fixs[i],))
-            row = self.cur.fetchone()
-            if row: 
-                #print(row)
-                deci.append(row)
-            elif fixs[i][0:4].isdigit() and fixs[i][5:10].isdigit() and fixs[i][4].isalpha() and fixs[i][10].isalpha():
+            #if row: 
+            #    print(row)
+            #    deci.append(row)
+            if fixs[i][0:4].isdigit() and fixs[i][5:10].isdigit() and fixs[i][4].isalpha() and fixs[i][10].isalpha():
                 lat_deg = int(fixs[i][0:2])
                 lat_min = int(fixs[i][2:4])
                 lon_deg = int(fixs[i][5:8])
@@ -43,43 +41,46 @@ class flight:
                 deci.append((lat, -lon))
                 #print((lat,-lon))
             else:
-                deci.append('None')
-                #print("'{}' not found!!!".format(fixs[i]))
+                self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (fixs[i],))
+                row = self.cur.fetchone()
+                if row:
+                    deci.append(row)
+                else:
+                    deci.insert(0, fixs[i])
+                    #print("'{}' not found!!!".format(fixs[i]))
+        #print(deci)
         return deci
 
     def gm(self, deci):
-        if not 'None' in deci:
-            if self.origin[:2] == "GM":
-                self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (self.origin,))
-                row = self.cur.fetchone()
-                if row:
-                    deci = [row] + deci
-                else:
-                    deci = ['None'] + deci
-            if self.destination[:2] == "GM":
-                self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (self.destination,))
-                row = self.cur.fetchone()
-                if row:
-                    deci = deci + [row]
-                else:
-                    deci = deci + ['None']
-        #print(f"deci : {deci[:]}")
+        if self.origin[:2] == "GM":
+            self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (self.origin,))
+            row = self.cur.fetchone()
+            if row:
+                deci = [row] + deci
+            else:
+                deci = [self.origin] + deci
+        if self.destination[:2] == "GM":
+            self.cur.execute("SELECT lat, lon FROM decimalfixpoints WHERE name LIKE BINARY %s", (self.destination,))
+            row = self.cur.fetchone()
+            if row:
+                deci = deci + [row]
+            else:
+                deci = [self.destination] + deci
+        #print(deci)
         return deci
 
     def direct(self, deci):
         direct_dist = -1
-        if not 'None' in deci:
-            #print("Direct: {:.2f} NM".format(haversine(deci[0], deci[-1], unit='nmi')))
-            direct_dist = haversine(deci[0], deci[-1], unit='nmi')
+        #print("Direct: {:.2f} NM".format(haversine(deci[0], deci[-1], unit='nmi')))
+        direct_dist = haversine(deci[0], deci[-1], unit='nmi')
         return round(direct_dist, 2)
         
     def flown(self, deci):
         flown_dist = -1
-        if not 'None' in deci:
-            for j in range(0, (len(deci)-1)):
-                #print("{:.2f} NM".format(haversine(deci[j], deci[j+1], unit="nmi")))
-                flown_dist += haversine(deci[j], deci[j+1], unit="nmi")
-            #print("Flown: {:.2f} NM".format(flown_dist))
+        for j in range(0, (len(deci)-1)):
+            #print("{:.2f} NM".format(haversine(deci[j], deci[j+1], unit="nmi")))
+            flown_dist += haversine(deci[j], deci[j+1], unit="nmi")
+        #print("Flown: {:.2f} NM".format(flown_dist))
         return round(flown_dist, 2)
 
     def kea(self, direct_dist, flown_dist):
@@ -89,36 +90,13 @@ class flight:
             #print("kea = {:.2f} %".format(kea))
         return round(kea, 2)
 
-    def to_db(self, direct_dist, flown_dist, kea):
-        self.cur.execute("SELECT id FROM flights WHERE arrived_at=%s AND route=%s",(self.arrived_at, self.route))
-        row = self.cur.fetchall()
+    def to_db(self, id_flight, direct_dist, flown_dist, kea):
         try:
-            if len(row) == 1:
-                #print(row[0], direct_dist, flown_dist, kea)
-                self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[0], direct_dist, flown_dist, kea))
-            elif len(row) == 2:
-                #print(row[1], direct_dist, flown_dist, kea)
-                self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(row[1], direct_dist, flown_dist, kea))
-            else:
-                #print ("id exists")
-                pass
-        except Exception:
-            pass
+            self.cur.execute("INSERT INTO distances (id_flight, direct, flown, kea) VALUES(%s, %s, %s, %s)",(id_flight, direct_dist, flown_dist, kea))
+            #self.conn.commit()
+        except Exception as e:
+            print(e)   
 
+    def commit(self):
         self.conn.commit()
 
-
-"""Main Program"""
-"""
-def main():
-    #f = flight("TEST1", "GZEA", "GMXX", "2023-12-12 12:12:12", "MABAP FOBAC CSD")
-    from storage import storage
-    a = storage()
-    query_rows = a.show_flights("RAM")
-    json = a.to_json()
-    print(json)
-    count = a.count()
-    a.close()
-
-main()
-"""

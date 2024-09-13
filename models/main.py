@@ -9,14 +9,17 @@ import matplotlib.pyplot as plt
 s = storage()
 f = flight()
 
-s.date_from = "2023-04-01"
-s.date_to = "2023-04-02"
-""" THIS LINES ARE USED TO CALCULATE DISTANCES AND KEA AND STORE THEM TO DB """
+#s.date_from = "2023-03-31"
+#s.date_to = "2023-03-31"
+acb_path = "/statisticair/record/.RECORD.2023.04.02"
+with  open(acb_path, 'r'):
+    print(s.upload(acb_path))
 #flights = s.show_flights()
 #to_dict = s.to_dict(flights)
-#dist = s.calculator(to_dict)
+#print(s.calculator(to_dict))
 #dist = s.show_distances(flights)
-print(s.show_all())
+#print(dist)
+""" THIS LINES ARE USED TO CALCULATE DISTANCES AND KEA AND STORE THEM TO DB """
 """
 for i in to_dict:
     #print(i)

@@ -8,7 +8,10 @@
     <link rel="stylesheet" href="static/styles/body.css">
   </head>
   <body>
-    <header>STATISTICAIR</header>
+    <header>
+	    <div class="logo"></div>
+	    <div class="title">STATISTICAIR</div>
+    </header>
     <div class="container"> 
      <div class="menu">
 	     <a href= "{{ url_for('form') }}">Data</a></br>
@@ -18,20 +21,36 @@
      <div class="right">
         <section class="filters">
 	  <form action="/import" method="POST" enctype="multipart/form-data">
-	    <label for="fixpoint">Fixpoint_Name:</label>
-	    <input type="test" name="fixpoint">
+	    <label for="fix_name">Name:</label>
+	    <input type="text" name="fix_name" size="5" maxlength="5">
+	    <input type="radio" id="fixpoint" name="fix_airport" value="fixpoint">
+	    <label for="fix_airport">Fixpoint:</label>
+	    <input type="radio" id="airport" name="fix_airport" value="airport">
+	    <label for="fix_airport">Airport:</label>
+	    </br>
 	    <label for="latitude">Latitude:</label>
-	    <input type="test" name="latitude">
+	    <label for="lat_deg">Deg:</label>
+	    <input type="number" name="lat_deg" max="359" min="0">
+	    <label for="lat_min">Min:</label>
+	    <input type="number" name="lat_min" max="59" min="0">
+	    <label for="lat_sec">Sec:</label>
+	    <input type="number" name="lat_sec" max="59" min="0">
+	    </br>
 	    <label for="longitude">Longitude:</label>
-	    <input type="test" name="longitude"></br>
+	    <label for="lon_deg">Deg:</label>
+	    <input type="number" name="lon_deg" max="359" min="0"> 
+	    <label for="lon_min">Min:</label>
+	    <input type="number" name="lon_min" max="59" min="0">
+	    <label for="lon_sec">Sec:</label>
+	    <input type="number" name="lon_sec" max="59" min="0">
+	    </br></br>
 	    <label for="file">CSV file:</label>
 	    <input type="file" name="file"></br>
 	    <button type="submit">Import</button>
 	  </form>
         </section>
 	<section class="results">
-		<h2>Data LOADED </h2>
-		<p>{{ di }}, {{ fl }}, {{ kea }}</p>
+		<h1> {{ fix_msg }} | {{ file_msg }} </h1>
 	</section>
      </div>	
     </div>

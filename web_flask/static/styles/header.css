@@ -1,9 +1,22 @@
 header {
+	display: flex;
 	background-color: black;
 	height: 70px;
 	width: 100%;
-	text-align: center;
+	align-items: center;
+	justify-content: center;
+
+}
+.title {
 	font-size: 30px;
 	color: white;
-
+}
+.logo {
+	position: absolute;
+	left: 0;
+	margin-left: 5px;
+        height: 80px;
+        width: 90px;
+        background: url("../images/logo.png") no-repeat center;
+	border-radius: 20%;
 }

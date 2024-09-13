@@ -1,6 +1,6 @@
 -- import data from a CSV file
 USE kpi;
-LOAD DATA INFILE '/var/lib/mysql-files/ACB20230411'
+LOAD DATA INFILE '/var/lib/mysql-files/ACB20230401'
 INTO TABLE flights
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'

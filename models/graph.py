@@ -8,7 +8,7 @@ def pie_graph(sizes, labels):
     plt.figure(facecolor="#bec9ca")
     plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', shadow=True, startangle=140)
     fig = plt.axis('equal')
-    plt.savefig('web_flask/static/pie_chart.png', bbox_inches='tight', dpi=100)
+    plt.savefig('web_flask/static/pie_chart.png', bbox_inches='tight', dpi=200)
     plt.close()
 
 def bar_graph(x, y):
@@ -25,5 +25,5 @@ def bar_graph(x, y):
     plt.yticks(fontsize=5)
     for i in range(len(x)):
         plt.text(i,y[i],y[i], fontsize=5, horizontalalignment='center', verticalalignment='bottom',)
-    plt.savefig('web_flask/static/bar.png', bbox_inches='tight', dpi=200)
+    plt.savefig('web_flask/static/bar.png', bbox_inches='tight', dpi=300)
     plt.close()
