@@ -3,6 +3,7 @@
 **STATISTICAIR** is a web application to Display, Analyze and Measure Airspace Performance.
 Linekdin Author: https://www.linkedin.com/in/amrbouyoussef/
 Landing Page: https://statisticair.my.canva.site/landingpage
+![Import page](/Capture2.PNG)
 <H3>Installation:</H3>
 1) Install python3 and mysql-server on Linux
 2) Execute: cat create_db.sql | sudo mysql
